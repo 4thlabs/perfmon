@@ -50,11 +50,23 @@ func collectNetworkStats(out io.Reader) ([]Stats, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse rxBytes of %s", name)
 		}
+
+		rxPackets, err := strconv.ParseUint(fields[1], 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse rxPackets of %s", name)
+		}
+
 		txBytes, err := strconv.ParseUint(fields[8], 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse txBytes of %s", name)
 		}
-		networks = append(networks, Stats{Name: name, RxBytes: rxBytes, TxBytes: txBytes})
+
+		txPackets, err := strconv.ParseUint(fields[9], 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse txPackets of %s", name)
+		}
+
+		networks = append(networks, Stats{Name: name, RxBytes: rxBytes, TxBytes: txBytes, RxPackets: rxPackets, TxPackets: txPackets})
 	}
 	if err := scanner.Err(); err != nil {
 		return nil, fmt.Errorf("scan error for /proc/net/dev: %s", err)

@@ -64,6 +64,9 @@ func main() {
 			fmt.Printf("System CPU %f \n", stats.Cpu.System)
 			fmt.Printf("Bytes Sent %d \n", stats.Network.RxBytes)
 			fmt.Printf("Bytes Received %d \n", stats.Network.TxBytes)
+
+			fmt.Printf("Packets Sent %d \n", stats.Network.RxPackets)
+			fmt.Printf("Packets Received %d \n", stats.Network.TxPackets)
 		}
 	}
 }

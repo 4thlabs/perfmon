@@ -49,18 +49,20 @@ func Get() (Metrics, error) {
 
 	total := float64(after.Total - before.Total)
 
-	var rxTotalBefore, txTotalBefore, rxPacketsTotalBefore int64
+	var rxTotalBefore, txTotalBefore, rxPacketsTotalBefore, txPacketsTotalBefore int64
 	for _, stat := range beforeIO {
 		rxTotalBefore += int64(stat.RxBytes)
 		txTotalBefore += int64(stat.TxBytes)
 		rxPacketsTotalBefore += int64(stat.RxPackets)
+		txPacketsTotalBefore += int64(stat.TxPackets)
 	}
 
-	var rxTotalAfter, txTotalAfter, rxPacketsTotalAfter int64
+	var rxTotalAfter, txTotalAfter, rxPacketsTotalAfter, txPacketsTotalAfter int64
 	for _, stat := range afterIO {
 		rxTotalAfter += int64(stat.RxBytes)
 		txTotalAfter += int64(stat.TxBytes)
 		rxPacketsTotalAfter += int64(stat.RxPackets)
+		txPacketsTotalAfter += int64(stat.TxPackets)
 	}
 
 	return Metrics{
@@ -73,6 +75,7 @@ func Get() (Metrics, error) {
 			RxBytes:   int64((rxTotalAfter - rxTotalBefore) / 1024 / 1024),
 			TxBytes:   int64((txTotalAfter - txTotalBefore) / 1024 / 1024),
 			RxPackets: int64(rxPacketsTotalAfter - rxPacketsTotalBefore),
+			TxPackets: int64(txPacketsTotalAfter - txPacketsTotalBefore),
 		},
 	}, nil
 }
