@@ -70,8 +70,8 @@ func Get() (Metrics, error) {
 			Idle:   float64(after.Idle-before.Idle) / total * 100,
 		},
 		Network: Network{
-			RxBytes:   int64((rxTotalAfter - rxTotalBefore) / 1024 / 1024),
-			TxBytes:   int64((txTotalAfter - txTotalBefore) / 1024 / 1024),
+			RxBytes:   int64((rxTotalAfter - rxTotalBefore)),
+			TxBytes:   int64((txTotalAfter - txTotalBefore)),
 			RxPackets: int64(rxPacketsTotalAfter - rxPacketsTotalBefore),
 		},
 	}, nil
