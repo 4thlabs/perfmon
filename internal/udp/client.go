@@ -49,6 +49,7 @@ func (client *Client) Start(recording *recording.Recording) {
 				}
 			}
 		}(client.conn)
+
 	}
 }
 

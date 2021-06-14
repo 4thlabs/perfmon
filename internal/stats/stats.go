@@ -14,7 +14,8 @@ type Cpu struct {
 }
 
 type Network struct {
-	Rx, Tx int64
+	RxBytes, TxBytes     int64
+	RxPackets, TxPackets int64
 }
 
 type Metrics struct {
@@ -48,18 +49,18 @@ func Get() (Metrics, error) {
 
 	total := float64(after.Total - before.Total)
 
-	rxTotalBefore := 0
-	txTotalBefore := 0
+	var rxTotalBefore, txTotalBefore, rxPacketsTotalBefore int64
 	for _, stat := range beforeIO {
-		rxTotalBefore += int(stat.RxBytes)
-		txTotalBefore += int(stat.TxBytes)
+		rxTotalBefore += int64(stat.RxBytes)
+		txTotalBefore += int64(stat.TxBytes)
+		rxPacketsTotalBefore += int64(stat.RxPackets)
 	}
 
-	rxTotalAfter := 0
-	txTotalAfter := 0
+	var rxTotalAfter, txTotalAfter, rxPacketsTotalAfter int64
 	for _, stat := range afterIO {
-		rxTotalAfter += int(stat.RxBytes)
-		txTotalAfter += int(stat.TxBytes)
+		rxTotalAfter += int64(stat.RxBytes)
+		txTotalAfter += int64(stat.TxBytes)
+		rxPacketsTotalAfter += int64(stat.RxPackets)
 	}
 
 	return Metrics{
@@ -69,8 +70,9 @@ func Get() (Metrics, error) {
 			Idle:   float64(after.Idle-before.Idle) / total * 100,
 		},
 		Network: Network{
-			Rx: int64(rxTotalAfter),
-			Tx: int64(txTotalAfter),
+			RxBytes:   int64((rxTotalAfter - rxTotalBefore) / 1024 / 1024),
+			TxBytes:   int64((txTotalAfter - txTotalBefore) / 1024 / 1024),
+			RxPackets: int64(rxPacketsTotalAfter - rxPacketsTotalBefore),
 		},
 	}, nil
 }

@@ -27,10 +27,13 @@ func Init() {
 			if err == nil {
 				monitorUI.Cpu.Data = []float64{float64(math.Round(s.Cpu.User)), float64(math.Round(s.Cpu.System)), float64(math.Round(s.Cpu.Idle))}
 				monitorUI.Network.Rows = []string{
-					fmt.Sprintf("[0] RxBytes %d", s.Network.Rx),
-					fmt.Sprintf("[1] TxBytes %d", s.Network.Tx),
+					fmt.Sprintf("[0] RxBytes %d", s.Network.RxBytes),
+					fmt.Sprintf("[1] TxBytes %d", s.Network.TxBytes),
+					fmt.Sprintf("[2] RxPacket %d", s.Network.RxPackets),
 				}
 				term.Render(monitorUI)
+			} else {
+				log.Println(err)
 			}
 		}
 	}()

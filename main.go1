@@ -1,0 +1,58 @@
+package main
+
+import (
+	"fmt"
+	"net"
+	"runtime"
+)
+
+func client(conn *net.UDPConn) {
+	for i := 0; i < runtime.NumCPU()/2; i++ {
+		go func(conn *net.UDPConn) {
+			for {
+				_, err := conn.Write([]byte("Hello from the world!"))
+				if err != nil {
+					fmt.Println(err)
+				}
+			}
+		}(conn)
+	}
+}
+
+func server(conn net.PacketConn, addr net.UDPAddr) {
+	for i := 0; i <= runtime.NumCPU()/2; i++ {
+		go func(conn net.PacketConn, addr net.UDPAddr) {
+			buffer := make([]byte, 2048)
+			for {
+				//fmt.Println("Reading")
+				_, _, err := conn.ReadFrom(buffer)
+				if err != nil {
+					fmt.Println(err)
+				}
+			}
+		}(conn, addr)
+	}
+}
+
+func main() {
+	addr := net.UDPAddr{Port: 1234, IP: net.ParseIP("127.0.0.1")}
+	rx, rxerr := net.ListenPacket("udp", "127.0.0.1:1234")
+	tx, txerr := net.DialUDP("udp", nil, &addr)
+
+	if rxerr != nil {
+		fmt.Println(rxerr)
+	}
+
+	if txerr != nil {
+		fmt.Println(txerr)
+	}
+
+	defer rx.Close()
+	defer tx.Close()
+
+	server(rx, addr)
+	client(tx)
+
+	i := 0
+	fmt.Scanln(&i)
+}

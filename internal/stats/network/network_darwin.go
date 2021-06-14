@@ -40,8 +40,9 @@ func Get() ([]Stats, error) {
 
 // Stats represents network statistics for darwin
 type Stats struct {
-	Name             string
-	RxBytes, TxBytes uint64
+	Name                 string
+	RxBytes, TxBytes     uint64
+	RxPackets, TxPackets uint64
 }
 
 func collectNetworkStats(out io.Reader) ([]Stats, error) {
@@ -54,7 +55,7 @@ func collectNetworkStats(out io.Reader) ([]Stats, error) {
 	if !strings.HasPrefix(line, "Name") {
 		return nil, fmt.Errorf("unexpected output of netstat -bni: %s", line)
 	}
-	var rxBytesIdx, txBytesIdx int
+	var rxBytesIdx, txBytesIdx, rxPktsIdx, txPktsIdx int
 	fields := strings.Fields(line)
 	fieldsCount := len(fields)
 	for i, field := range fields {
@@ -63,9 +64,13 @@ func collectNetworkStats(out io.Reader) ([]Stats, error) {
 			rxBytesIdx = i
 		case "Obytes":
 			txBytesIdx = i
+		case "Ipkts":
+			rxPktsIdx = i
+		case "Opkts":
+			txPktsIdx = i
 		}
 	}
-	if rxBytesIdx == 0 || txBytesIdx == 0 {
+	if rxBytesIdx == 0 || txBytesIdx == 0 || rxPktsIdx == 0 || txPktsIdx == 0 {
 		return nil, fmt.Errorf("unexpected output of netstat -bni: %s", line)
 	}
 
@@ -73,12 +78,12 @@ func collectNetworkStats(out io.Reader) ([]Stats, error) {
 	for scanner.Scan() {
 		fields := strings.Fields(scanner.Text())
 		name := strings.TrimSuffix(fields[0], "*")
-		if strings.HasPrefix(name, "lo") || !strings.HasPrefix(fields[2], "<Link#") {
+		if !strings.HasPrefix(fields[2], "<Link#") {
 			continue
 		}
-		rxBytesIdx, txBytesIdx := rxBytesIdx, txBytesIdx
+		rxBytesIdx, txBytesIdx, rxPktsIdx, txPktsIdx := rxBytesIdx, txBytesIdx, rxPktsIdx, txPktsIdx
 		if len(fields) < fieldsCount { // Address can be empty
-			rxBytesIdx, txBytesIdx = rxBytesIdx-1, txBytesIdx-1
+			rxBytesIdx, txBytesIdx, rxPktsIdx, txPktsIdx = rxBytesIdx-1, txBytesIdx-1, rxPktsIdx-1, txPktsIdx-1
 		}
 		rxBytes, err := strconv.ParseUint(fields[rxBytesIdx], 10, 64)
 		if err != nil {
@@ -88,7 +93,18 @@ func collectNetworkStats(out io.Reader) ([]Stats, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse Obytes of %s", name)
 		}
-		networks = append(networks, Stats{Name: name, RxBytes: rxBytes, TxBytes: txBytes})
+
+		txPackets, err := strconv.ParseUint(fields[txPktsIdx], 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse 0pkts of %s", name)
+		}
+
+		rxPackets, err := strconv.ParseUint(fields[rxPktsIdx], 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse Ipkts of %s", name)
+		}
+
+		networks = append(networks, Stats{Name: name, RxBytes: rxBytes, TxBytes: txBytes, TxPackets: txPackets, RxPackets: rxPackets})
 	}
 
 	if err := scanner.Err(); err != nil {

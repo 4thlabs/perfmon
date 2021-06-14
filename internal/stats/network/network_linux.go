@@ -13,8 +13,9 @@ import (
 
 // Stats represents network statistics for linux
 type Stats struct {
-	Name             string
-	RxBytes, TxBytes uint64
+	Name                 string
+	RxBytes, TxBytes     uint64
+	RxPackets, TxPackets uint64
 }
 
 // Get network statistics

@@ -5,8 +5,8 @@ import (
 	"io"
 
 	"gitlab.com/4thlabs/perfmon/internal/recording"
+	"gitlab.com/4thlabs/perfmon/internal/stats"
 	"gitlab.com/4thlabs/perfmon/internal/udp"
-	"gitlab.com/4thlabs/perfmon/internal/ui"
 )
 
 func ReadRecording() {
@@ -54,8 +54,16 @@ func main() {
 	defer client.Close()
 	defer server.Close()
 
-	//server.Start()
+	server.Start()
 	client.Start(r)
 
-	ui.Init()
+	for {
+		stats, err := stats.Get()
+		if err == nil {
+			fmt.Printf("User CPU %f \n", stats.Cpu.User)
+			fmt.Printf("System CPU %f \n", stats.Cpu.System)
+			fmt.Printf("Bytes Sent %d \n", stats.Network.RxBytes)
+			fmt.Printf("Bytes Received %d \n", stats.Network.TxBytes)
+		}
+	}
 }

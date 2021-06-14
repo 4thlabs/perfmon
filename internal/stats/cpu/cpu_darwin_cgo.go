@@ -18,7 +18,7 @@ func Get() (*Stats, error) {
 
 // Stats represents cpu statistics for darwin
 type Stats struct {
-	User, System, Idle, Nice, Total uint64
+	User, System, Idle, Nice, Total, Iowait, Irq, Softirq uint64
 }
 
 func collectCPUStats() (*Stats, error) {
