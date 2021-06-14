@@ -43,9 +43,9 @@ func collectNetworkStats(out io.Reader) ([]Stats, error) {
 			continue
 		}
 		name := strings.TrimSpace(kv[0])
-		if name == "lo" {
-			continue
-		}
+		// if name == "lo" {
+		// 	continue
+		// }
 		rxBytes, err := strconv.ParseUint(fields[0], 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse rxBytes of %s", name)
