@@ -1,65 +1,93 @@
 package ui
 
 import (
-	"image"
-	"sync"
+	"context"
+	"time"
 
-	term "github.com/gizak/termui/v3"
-	"github.com/gizak/termui/v3/widgets"
+	"github.com/mum4k/termdash/cell"
+	"github.com/mum4k/termdash/container"
+	"github.com/mum4k/termdash/container/grid"
+	"github.com/mum4k/termdash/linestyle"
+	"github.com/mum4k/termdash/widgets/barchart"
+	"github.com/mum4k/termdash/widgets/text"
 )
 
 type MonitorUI struct {
-	Grid    *term.Grid
-	Cpu     *widgets.BarChart
-	Network *widgets.List
-
-	sync.Mutex
+	Cpu     *barchart.BarChart
+	Network *text.Text
 }
 
 // System Monitoring UI
-func NewMonitorUI() *MonitorUI {
-	component := &MonitorUI{}
+func NewMonitorUI(ctx context.Context) (*MonitorUI, error) {
 
-	bc := widgets.NewBarChart()
-	bc.Data = []float64{0, 0, 0}
-	bc.Labels = []string{"User", "System", "Idle"}
-	bc.Title = "CPU Usage (%)"
-	//bc.BarWidth = 4
-	bc.BarGap = 4
+	cpu, err := newBarChart(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	bc.BarColors = []term.Color{term.ColorRed, term.ColorGreen, term.ColorBlue}
-	bc.LabelStyles = []term.Style{term.NewStyle(term.ColorWhite)}
-	bc.NumStyles = []term.Style{term.NewStyle(term.ColorWhite)}
+	return &MonitorUI{
+		Cpu: cpu,
+	}, nil
+}
 
-	net := widgets.NewList()
-	net.Title = "Network"
+func (component *MonitorUI) Layout(ctx context.Context) ([]container.Option, error) {
+	builder := grid.New()
 
-	grid := term.NewGrid()
-	termWidth, termHeight := term.TerminalDimensions()
-	grid.SetRect(0, 0, termWidth, termHeight)
-
-	grid.Set(
-		term.NewRow(1.0/2.0,
-			term.NewCol(1.0/4.0, bc),
-			term.NewCol(2.0/4.0, net),
+	builder.Add(
+		grid.RowHeightPerc(50,
+			grid.ColWidthPerc(30,
+				grid.Widget(component.Cpu,
+					container.Border(linestyle.Light),
+					container.BorderTitle("Cpu"),
+				),
+			),
+			grid.ColWidthPerc(70),
 		),
+		grid.RowHeightPerc(50),
 	)
 
-	component.Grid = grid
-	component.Cpu = bc
-	component.Network = net
+	gridOpts, err := builder.Build()
+	if err != nil {
+		return nil, err
+	}
 
-	return component
+	return gridOpts, nil
 }
 
-func (ui *MonitorUI) GetRect() image.Rectangle {
-	return ui.Grid.GetRect()
+func newBarChart(ctx context.Context) (*barchart.BarChart, error) {
+	bc, err := barchart.New(
+		barchart.BarColors([]cell.Color{
+			cell.ColorNumber(33),
+			cell.ColorNumber(39),
+			cell.ColorNumber(45),
+		}),
+		barchart.ValueColors([]cell.Color{
+			cell.ColorWhite,
+			cell.ColorWhite,
+			cell.ColorWhite,
+		}),
+		barchart.Labels([]string{"User", "System", "Idle"}),
+		barchart.ShowValues(),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return bc, nil
 }
 
-func (ui *MonitorUI) SetRect(x1 int, y1 int, x2 int, y2 int) {
-	ui.Grid.SetRect(x1, y1, x2, y2)
-}
-
-func (ui *MonitorUI) Draw(buffer *term.Buffer) {
-	ui.Grid.Draw(buffer)
+func Periodic(ctx context.Context, interval time.Duration, fn func() error) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			if err := fn(); err != nil {
+				panic(err)
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
 }
