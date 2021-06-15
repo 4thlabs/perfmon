@@ -1,8 +1,7 @@
 package udp
 
 import (
-	"fmt"
-	"io"
+	"log"
 	"net"
 	"runtime"
 
@@ -19,40 +18,50 @@ func NewClient() *Client {
 }
 
 func (client *Client) Connect(address string, port int) error {
-	addr := net.UDPAddr{Port: port, IP: net.ParseIP(address)}
-	conn, err := net.DialUDP("udp", nil, &addr)
+	// addr := net.UDPAddr{Port: port, IP: net.ParseIP(address)}
+	// conn, err := net.DialUDP("udp", nil, &addr)
 
-	if err != nil {
-		return err
-	}
+	// if err != nil {
+	// 	return err
+	// }
 
-	client.addr = addr
-	client.conn = conn
+	// client.addr = addr
+	// client.conn = conn
 
 	return nil
 }
 
 func (client *Client) Start(recording *recording.Recording) {
-	for i := 0; i < runtime.NumCPU()/2; i++ {
+	data := make([]byte, 1024)
+	for i := 0; i < runtime.NumCPU(); i++ {
 
-		go func(conn *net.UDPConn) {
+		go func(idx int) {
+			addr := net.UDPAddr{Port: 1000 + idx, IP: net.ParseIP("127.0.0.1")}
+			conn, err := net.DialUDP("udp", nil, &addr)
+
+			if err != nil {
+				log.Fatalln(err)
+			}
+
+			defer conn.Close()
+
 			for {
-				f, err := recording.ReadFrame()
-				if err == io.EOF {
-					recording.Reset()
-					continue
-				}
-				_, err = conn.Write(f.Data)
+				// f, err := recording.ReadFrame()
+				// if err == io.EOF {
+				// 	recording.Reset()
+				// 	continue
+				// }
+				_, err := conn.Write(data)
+				//writer.Flush()
 
 				if err != nil {
-					fmt.Println(err)
+					//fmt.Println(err)
 				}
 			}
-		}(client.conn)
-
+		}(i)
 	}
 }
 
 func (client *Client) Close() {
-	client.conn.Close()
+	//client.conn.Close()
 }
