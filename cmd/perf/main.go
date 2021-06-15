@@ -43,18 +43,18 @@ func main() {
 	client := udp.NewClient()
 	server := udp.NewServer()
 
-	if err := client.Connect("127.0.0.1", 1234); err != nil {
+	if err := client.Connect("127.0.0.1", 1237); err != nil {
 		panic(err)
 	}
 
-	if err := server.Connect("127.0.0.1", 1234); err != nil {
+	if err := server.Connect("127.0.0.1", 1237); err != nil {
 		panic(err)
 	}
 
 	defer client.Close()
 	defer server.Close()
 
-	server.Start()
+	//	server.Start()
 	client.Start(r)
 
 	// for {
