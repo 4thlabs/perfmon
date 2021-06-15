@@ -2,6 +2,7 @@ package ui
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -50,6 +51,12 @@ func Init() {
 		if err != nil {
 			return err
 		}
+
+		comp.Network.Reset()
+		comp.Network.Write(fmt.Sprintf("[0] RxBytes: %d\n", stats.Network.RxBytes))
+		comp.Network.Write(fmt.Sprintf("[1] TxBytes: %d\n", stats.Network.TxBytes))
+		comp.Network.Write(fmt.Sprintf("[2] RxPackets: %d\n", stats.Network.RxPackets))
+		comp.Network.Write(fmt.Sprintf("[3] RxBytes: %d\n", stats.Network.TxPackets))
 
 		return comp.Cpu.Values([]int{int(stats.Cpu.User), int(stats.Cpu.System), int(stats.Cpu.Idle)}, 100)
 	})

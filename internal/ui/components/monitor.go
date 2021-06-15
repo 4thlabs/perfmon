@@ -25,8 +25,14 @@ func NewMonitorUI(ctx context.Context) (*MonitorUI, error) {
 		return nil, err
 	}
 
+	net, err := newRollText(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return &MonitorUI{
-		Cpu: cpu,
+		Cpu:     cpu,
+		Network: net,
 	}, nil
 }
 
@@ -41,7 +47,12 @@ func (component *MonitorUI) Layout(ctx context.Context) ([]container.Option, err
 					container.BorderTitle("Cpu"),
 				),
 			),
-			grid.ColWidthPerc(70),
+			grid.ColWidthPerc(70,
+				grid.Widget(component.Network,
+					container.Border(linestyle.Light),
+					container.BorderTitle("Network"),
+				),
+			),
 		),
 		grid.RowHeightPerc(50),
 	)
@@ -75,6 +86,15 @@ func newBarChart(ctx context.Context) (*barchart.BarChart, error) {
 	}
 
 	return bc, nil
+}
+
+func newRollText(ctx context.Context) (*text.Text, error) {
+	t, err := text.New(text.RollContent())
+	if err != nil {
+		return nil, err
+	}
+
+	return t, nil
 }
 
 func Periodic(ctx context.Context, interval time.Duration, fn func() error) {
