@@ -3,7 +3,9 @@ package udp
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/hmac"
 	"crypto/rand"
+	"crypto/sha1"
 	"encoding/hex"
 	"io"
 	"log"
@@ -61,6 +63,16 @@ func encryt(key []byte, data []byte) []byte {
 	return aesgcm.Seal(nil, nonce, data, nil)
 }
 
+func getHmac(key []byte, data []byte) string {
+	mac := hmac.New(sha1.New, key)
+
+	mac.Write(data)
+
+	sha := hex.EncodeToString(mac.Sum(nil))
+
+	return sha
+}
+
 func (client *Client) Start(recording *recording.Recording) {
 	key, _ := hex.DecodeString("6368616e676520746869732070617373776f726420746f206120736563726574")
 	for i := 0; i < 1000; i++ {
@@ -80,7 +92,7 @@ func (client *Client) Start(recording *recording.Recording) {
 
 				//for y := 0; y < 100; y++ {
 				encryt(key, data)
-				encryt(key, data)
+				getHmac(key, data)
 				//}
 
 				_, err = conn.Write(data)
