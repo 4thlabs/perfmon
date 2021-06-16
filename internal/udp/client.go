@@ -1,7 +1,6 @@
 package udp
 
 import (
-	"io"
 	"log"
 	"net"
 	"runtime"
@@ -33,7 +32,7 @@ func (client *Client) Connect(address string, port int) error {
 }
 
 func (client *Client) Start(recording *recording.Recording) {
-	//data := make([]byte, 1024)
+
 	for i := 0; i < runtime.NumCPU(); i++ {
 
 		go func(idx int) {
@@ -47,13 +46,8 @@ func (client *Client) Start(recording *recording.Recording) {
 			defer conn.Close()
 
 			for {
-				f, err := recording.ReadFrame()
-				if err == io.EOF {
-					recording.Reset()
-					continue
-				}
-				_, err = conn.Write(f.Data)
-				//writer.Flush()
+				data := recording.GetInMemoryFrame()
+				_, err = conn.Write(data)
 
 				if err != nil {
 					//fmt.Println(err)

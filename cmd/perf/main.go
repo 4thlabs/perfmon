@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 
 	"gitlab.com/4thlabs/perfmon/internal/recording"
 	"gitlab.com/4thlabs/perfmon/internal/udp"
@@ -35,7 +36,12 @@ func ReadRecording() {
 func main() {
 	r, err := recording.Open("6cb3b905-8d80-3e5d-8178-1967915f8849_new_1")
 	if err != nil {
-		panic(err)
+		log.Panicln(err)
+	}
+
+	err = r.LoadInMemory(10000)
+	if err != nil {
+		log.Panicln(err)
 	}
 
 	defer r.Close()

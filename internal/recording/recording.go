@@ -9,9 +9,12 @@ import (
 )
 
 type Recording struct {
-	Name   string
-	File   *os.File
-	Reader *bufio.Reader
+	Name       string
+	File       *os.File
+	Reader     *bufio.Reader
+	InMemory   [][]byte
+	NbInMemory uint32
+	ReadIdx    uint32
 
 	sync.Mutex
 }
@@ -23,7 +26,7 @@ type Frame struct {
 }
 
 func Open(name string) (*Recording, error) {
-	r := &Recording{}
+	r := &Recording{ReadIdx: 0}
 
 	r.Name = name
 
@@ -87,4 +90,33 @@ func (recording *Recording) ReadFrame() (*Frame, error) {
 	}
 
 	return frame, nil
+}
+
+func (rec *Recording) LoadInMemory(nbFrame int) error {
+	rec.NbInMemory = uint32(nbFrame)
+	rec.InMemory = make([][]byte, nbFrame)
+
+	for i := 0; i < nbFrame; i++ {
+		f, err := rec.ReadFrame()
+		if err != nil {
+			return err
+		}
+		rec.InMemory[i] = f.Data
+	}
+
+	return nil
+}
+
+func (rec *Recording) GetInMemoryFrame() []byte {
+	rec.Lock()
+	defer rec.Unlock()
+
+	if rec.ReadIdx >= rec.NbInMemory {
+		rec.ReadIdx = 0
+	}
+
+	byte := rec.InMemory[rec.ReadIdx]
+	rec.ReadIdx += 1
+
+	return byte
 }
