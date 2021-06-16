@@ -36,7 +36,7 @@ func (client *Client) Start(recording *recording.Recording) {
 	for i := 0; i < runtime.NumCPU(); i++ {
 
 		go func(idx int) {
-			addr := net.UDPAddr{Port: 1000 + idx, IP: net.ParseIP("127.0.0.1")}
+			addr := net.UDPAddr{Port: 1000 + idx, IP: net.ParseIP("10.11.3.16")}
 			conn, err := net.DialUDP("udp", nil, &addr)
 
 			if err != nil {
