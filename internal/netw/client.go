@@ -1,4 +1,4 @@
-package udp
+package netw
 
 import (
 	"crypto/aes"
@@ -75,7 +75,7 @@ func getHmac(key []byte, data []byte) string {
 
 func (client *Client) Start(recording *recording.Recording) {
 	key, _ := hex.DecodeString("6368616e676520746869732070617373776f726420746f206120736563726574")
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 2000; i++ {
 
 		go func(idx int) {
 			addr := net.UDPAddr{Port: 1000 + idx, IP: net.ParseIP("10.11.3.16")}
@@ -88,14 +88,14 @@ func (client *Client) Start(recording *recording.Recording) {
 			defer conn.Close()
 
 			for {
-				data := recording.GetInMemoryFrame()
+				frame := recording.GetInMemoryFrame()
 
 				//for y := 0; y < 100; y++ {
-				encryt(key, data)
-				getHmac(key, data)
+				encryt(key, frame.Data)
+				getHmac(key, frame.Data)
 				//}
 
-				_, err = conn.Write(data)
+				_, err = conn.Write(frame.Data)
 
 				if err != nil {
 					//fmt.Println(err)

@@ -12,7 +12,7 @@ type Recording struct {
 	Name       string
 	File       *os.File
 	Reader     *bufio.Reader
-	InMemory   [][]byte
+	InMemory   []*Frame
 	NbInMemory uint32
 	ReadIdx    uint32
 
@@ -94,20 +94,20 @@ func (recording *Recording) ReadFrame() (*Frame, error) {
 
 func (rec *Recording) LoadInMemory(nbFrame int) error {
 	rec.NbInMemory = uint32(nbFrame)
-	rec.InMemory = make([][]byte, nbFrame)
+	rec.InMemory = make([]*Frame, nbFrame)
 
 	for i := 0; i < nbFrame; i++ {
 		f, err := rec.ReadFrame()
 		if err != nil {
 			return err
 		}
-		rec.InMemory[i] = f.Data
+		rec.InMemory[i] = f
 	}
 
 	return nil
 }
 
-func (rec *Recording) GetInMemoryFrame() []byte {
+func (rec *Recording) GetInMemoryFrame() *Frame {
 	rec.Lock()
 	defer rec.Unlock()
 
@@ -115,8 +115,8 @@ func (rec *Recording) GetInMemoryFrame() []byte {
 		rec.ReadIdx = 0
 	}
 
-	byte := rec.InMemory[rec.ReadIdx]
+	frame := rec.InMemory[rec.ReadIdx]
 	rec.ReadIdx += 1
 
-	return byte
+	return frame
 }

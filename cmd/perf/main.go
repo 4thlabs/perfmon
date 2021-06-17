@@ -5,8 +5,8 @@ import (
 	"io"
 	"log"
 
+	"gitlab.com/4thlabs/perfmon/internal/netw"
 	"gitlab.com/4thlabs/perfmon/internal/recording"
-	"gitlab.com/4thlabs/perfmon/internal/udp"
 	"gitlab.com/4thlabs/perfmon/internal/ui"
 )
 
@@ -46,8 +46,8 @@ func main() {
 
 	defer r.Close()
 
-	client := udp.NewClient()
-	server := udp.NewServer()
+	client := netw.NewClient()
+	server := netw.NewServer()
 
 	if err := client.Connect("127.0.0.1", 1237); err != nil {
 		panic(err)
