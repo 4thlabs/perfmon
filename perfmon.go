@@ -9,6 +9,7 @@ var cli struct {
 	Monitor   commands.MonitorCmd   `cmd help:"Performance Monitoring"`
 	Stream    commands.StreamCmd    `cmd help:"Start streaming server"`
 	Broadcast commands.BroadcastCmd `cmd help:"Listen to incoming streams and broadcast them to X listeners"`
+	Listen    commands.ListenCmd    `cmd help:"Listen to un number of UDP Ports"`
 }
 
 func main() {
