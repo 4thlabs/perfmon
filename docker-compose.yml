@@ -7,4 +7,4 @@ services:
   broadcast:
     image: perfmon
     network_mode: host
-    command: broadcast --nb-listeners=1000
+    command: broadcast --nb-listeners=1000 --remote=10.11.3.16

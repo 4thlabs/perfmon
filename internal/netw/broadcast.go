@@ -71,7 +71,7 @@ func makeSenderPool(conns ConnectionPool) ([]chan []byte, error) {
 	return channels, nil
 }
 
-func (b *Broadcaster) Start(address string, listeners int) error {
+func (b *Broadcaster) Start(address string, remote string, listeners int) error {
 	host, sport, err := net.SplitHostPort(address)
 	if err != nil {
 		return err
@@ -95,7 +95,7 @@ func (b *Broadcaster) Start(address string, listeners int) error {
 
 	buffer := make([]byte, 2048)
 
-	conns, err := makeConnectionPool(host, listeners)
+	conns, err := makeConnectionPool(remote, listeners)
 	if err != nil {
 		return err
 	}
