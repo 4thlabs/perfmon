@@ -54,16 +54,14 @@ func makeSenderPool(conns ConnectionPool) ([]chan []byte, error) {
 			for {
 				packet := <-in
 				for _, c := range conns {
-					go func() {
-						Encryt(key, packet)
-						Hmac(key, packet)
 
-						_, err := c.Write(packet)
-						if err != nil {
-							log.Println(err)
-						}
-					}()
+					Encryt(key, packet)
+					Hmac(key, packet)
 
+					_, err := c.Write(packet)
+					if err != nil {
+						log.Println(err)
+					}
 					//log.Printf("Send packet with length %d", n)
 				}
 			}
