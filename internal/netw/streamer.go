@@ -1,6 +1,7 @@
 package netw
 
 import (
+	"log"
 	"net"
 	"strconv"
 	"time"
@@ -69,7 +70,11 @@ func (streamer *Streamer) Start(file string, address string, pps int) error {
 		for {
 			<-ticker.C
 			frame := streamer.recording.GetInMemoryFrame()
-			streamer.conn.Write(frame.Data)
+			_, err := streamer.conn.Write(frame.Data)
+			if err != nil {
+				log.Println(err)
+			}
+			time.Sleep(1 * time.Millisecond)
 		}
 	}()
 

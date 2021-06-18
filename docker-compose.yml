@@ -1,0 +1,10 @@
+services:
+  stream:
+      image: perfmon
+      build: .
+      network_mode: host
+      command: stream ./binaries/6cb3b905-8d80-3e5d-8178-1967915f8849_new_1 --pps 300
+  broadcast:
+    image: perfmon
+    network_mode: host
+    command: broadcast --nb-listeners=1000

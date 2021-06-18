@@ -60,7 +60,7 @@ func makeSenderPool(conns ConnectionPool) ([]chan []byte, error) {
 
 					_, err := c.Write(packet)
 					if err != nil {
-						log.Println(err)
+						//og.Println(err)
 					}
 					//log.Printf("Send packet with length %d", n)
 				}
