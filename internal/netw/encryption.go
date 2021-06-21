@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 	"crypto/sha1"
 	"encoding/hex"
+	"fmt"
 	"io"
 )
 
@@ -44,4 +45,81 @@ func Hmac(key []byte, data []byte) string {
 	sha := hex.EncodeToString(mac.Sum(nil))
 
 	return sha
+}
+
+// Create a single random initialised byte array of size.
+func GenerateNonce(size int) ([]byte, error) {
+
+	b := make([]byte, size)
+
+	// not checking len here because rand.Read doc reads:
+	//             On return, n == len(b) if and only if err == nil.
+	_, err := rand.Read(b)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
+}
+
+func Copy(src []byte, srcI int, dest []byte, destI int, copyLen int) {
+	srcI2 := srcI + copyLen
+	copy(dest[destI:], src[srcI:srcI2])
+}
+
+func EncryptGCM(encKey, input []byte) ([]byte, error) {
+
+	encKeyLen := len(encKey)
+
+	if encKeyLen < 16 {
+		return nil, fmt.Errorf("The key must be 16 bytes long")
+	}
+
+	encKeySized := encKey
+
+	if encKeyLen > 16 {
+		encKeySized = encKey[:16]
+	}
+
+	c, err := aes.NewCipher(encKeySized)
+
+	if err != nil {
+		return nil, err
+	}
+
+	//----------- Create the IV
+
+	// remember that GCM normally takes a 12 byte (96 bit) nounce
+	nonceSize := 12
+	iv, err := GenerateNonce(nonceSize)
+	if err != nil {
+		return nil, err
+	}
+
+	//----------- Encrypt
+
+	ivLen := len(iv)
+	enc, err := cipher.NewGCMWithNonceSize(c, nonceSize)
+
+	if err != nil {
+		return nil, err
+	}
+
+	cipherText := enc.Seal(nil, iv, input, nil)
+
+	//----------- Pack the message
+
+	// create output tag
+	output := make([]byte, 1+ivLen+len(cipherText))
+
+	i := 0
+	output[i] = byte(ivLen)
+	i++
+	Copy(iv, 0, output, i, ivLen)
+	i += ivLen
+
+	Copy(cipherText, 0, output, i, len(cipherText))
+
+	return output, nil
 }

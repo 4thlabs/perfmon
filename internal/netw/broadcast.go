@@ -55,8 +55,12 @@ func makeSenderPool(conns ConnectionPool, threads int, encrypt bool) ([]chan []b
 				for _, c := range conns {
 
 					if encrypt {
-						Encryt(key, packet)
-						Hmac(key, packet)
+						var e error
+						packet, e = EncryptGCM(key, packet)
+
+						if e != nil {
+							log.Println(e)
+						}
 					}
 
 					_, err := c.Write(packet)
