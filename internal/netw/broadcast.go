@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"log"
 	"net"
-	"runtime"
 	"strconv"
 )
 
@@ -41,13 +40,13 @@ func makeConnectionPool(ip string, nb int) (ConnectionPool, error) {
 	return pool, nil
 }
 
-func makeSenderPool(conns ConnectionPool) ([]chan []byte, error) {
+func makeSenderPool(conns ConnectionPool, threads int) ([]chan []byte, error) {
 	key, _ := hex.DecodeString("6368616e676520746869732070617373776f726420746f206120736563726574")
-	channels := make([]chan []byte, runtime.NumCPU()-1)
+	channels := make([]chan []byte, threads)
 
-	connNb := len(conns) / (runtime.NumCPU() - 1)
+	connNb := len(conns) / threads
 
-	for i := 0; i < runtime.NumCPU()-1; i++ {
+	for i := 0; i < threads; i++ {
 		channels[i] = make(chan []byte)
 
 		go func(in <-chan []byte, conns ConnectionPool, idx int) {
@@ -71,7 +70,7 @@ func makeSenderPool(conns ConnectionPool) ([]chan []byte, error) {
 	return channels, nil
 }
 
-func (b *Broadcaster) Start(address string, remote string, listeners int) error {
+func (b *Broadcaster) Start(address string, remote string, listeners int, threads int) error {
 	host, sport, err := net.SplitHostPort(address)
 	if err != nil {
 		return err
@@ -100,7 +99,7 @@ func (b *Broadcaster) Start(address string, remote string, listeners int) error 
 		return err
 	}
 
-	senders, err := makeSenderPool(conns)
+	senders, err := makeSenderPool(conns, threads)
 	if err != nil {
 		return err
 	}
