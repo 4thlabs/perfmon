@@ -40,7 +40,7 @@ func makeConnectionPool(ip string, nb int) (ConnectionPool, error) {
 	return pool, nil
 }
 
-func makeSenderPool(conns ConnectionPool, threads int) ([]chan []byte, error) {
+func makeSenderPool(conns ConnectionPool, threads int, encrypt bool) ([]chan []byte, error) {
 	key, _ := hex.DecodeString("6368616e676520746869732070617373776f726420746f206120736563726574")
 	channels := make([]chan []byte, threads)
 
@@ -54,8 +54,10 @@ func makeSenderPool(conns ConnectionPool, threads int) ([]chan []byte, error) {
 				packet := <-in
 				for _, c := range conns {
 
-					Encryt(key, packet)
-					Hmac(key, packet)
+					if encrypt {
+						Encryt(key, packet)
+						Hmac(key, packet)
+					}
 
 					_, err := c.Write(packet)
 					if err != nil {
@@ -70,7 +72,7 @@ func makeSenderPool(conns ConnectionPool, threads int) ([]chan []byte, error) {
 	return channels, nil
 }
 
-func (b *Broadcaster) Start(address string, remote string, listeners int, threads int) error {
+func (b *Broadcaster) Start(address string, remote string, listeners int, threads int, encryt bool) error {
 	host, sport, err := net.SplitHostPort(address)
 	if err != nil {
 		return err
@@ -99,7 +101,7 @@ func (b *Broadcaster) Start(address string, remote string, listeners int, thread
 		return err
 	}
 
-	senders, err := makeSenderPool(conns, threads)
+	senders, err := makeSenderPool(conns, threads, encryt)
 	if err != nil {
 		return err
 	}
