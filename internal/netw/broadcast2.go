@@ -7,21 +7,21 @@ import (
 	"strconv"
 )
 
-type Broadcaster struct {
+type Broadcaster2 struct {
 }
 
-func NewBroadcaster() *Broadcaster {
+func NewBroadcaster2() *Broadcaster {
 	return &Broadcaster{}
 }
 
-type ConnectionPool []*net.UDPConn
+func makeSenderPool2(listeners int, threads int, ip string, encrypt bool) ([]chan []byte, error) {
+	key, _ := hex.DecodeString("6368616e676520746869732070617373776f726420746f206120736563726574")
+	channels := make([]chan []byte, threads)
 
-const beginPort = int(1400)
+	connNb := listeners / threads
 
-func makeConnectionPool(ip string, nb int) (ConnectionPool, error) {
-	pool := make(ConnectionPool, nb)
-
-	for i := 0; i < nb; i++ {
+	for i := 0; i < threads; i++ {
+		channels[i] = make(chan []byte)
 		dest := &net.UDPAddr{
 			IP:   net.ParseIP(ip),
 			Port: beginPort + i,
@@ -34,25 +34,17 @@ func makeConnectionPool(ip string, nb int) (ConnectionPool, error) {
 			return nil, err
 		}
 
-		pool[i] = conn
-	}
+		go func(in <-chan []byte, conn *net.UDPConn, count int, idx int) {
+			defer conn.Close()
 
-	return pool, nil
-}
-
-func makeSenderPool(conns ConnectionPool, threads int, encrypt bool) ([]chan []byte, error) {
-	key, _ := hex.DecodeString("6368616e676520746869732070617373776f726420746f206120736563726574")
-	channels := make([]chan []byte, threads)
-
-	connNb := len(conns) / threads
-
-	for i := 0; i < threads; i++ {
-		channels[i] = make(chan []byte)
-
-		go func(in <-chan []byte, conns ConnectionPool, idx int) {
 			for {
 				packet := <-in
-				for _, c := range conns {
+				for i := 0; i < count; i++ {
+
+					dest := &net.UDPAddr{
+						IP:   net.ParseIP(ip),
+						Port: (beginPort * idx) + i,
+					}
 
 					if encrypt {
 						// var e error
@@ -64,20 +56,20 @@ func makeSenderPool(conns ConnectionPool, threads int, encrypt bool) ([]chan []b
 						Encryt(key, packet)
 					}
 
-					_, err := c.Write(packet)
+					_, err := conn.WriteToUDP(packet, dest)
 					if err != nil {
 						log.Println(err)
 					}
 					//log.Printf("Send packet with length %d", n)
 				}
 			}
-		}(channels[i], conns[connNb*i:connNb*(i+1)], i)
+		}(channels[i], conn, connNb, i)
 	}
 
 	return channels, nil
 }
 
-func (b *Broadcaster) Start(address string, remote string, listeners int, threads int, encryt bool) error {
+func (b *Broadcaster2) Start(address string, remote string, listeners int, threads int, encryt bool) error {
 	host, sport, err := net.SplitHostPort(address)
 	if err != nil {
 		return err
@@ -101,18 +93,9 @@ func (b *Broadcaster) Start(address string, remote string, listeners int, thread
 
 	buffer := make([]byte, 2048)
 
-	conns, err := makeConnectionPool(remote, listeners)
+	senders, err := makeSenderPool2(listeners, threads, remote, encryt)
 	if err != nil {
 		return err
-	}
-
-	senders, err := makeSenderPool(conns, threads, encryt)
-	if err != nil {
-		return err
-	}
-
-	for _, conn := range conns {
-		defer conn.Close()
 	}
 
 	for {
